@@ -75,11 +75,14 @@ class S3EventSource(kappa.event_source.base.EventSource):
         new_notification_spec = self._get_notification_spec(function)
 
         notification_spec_list = []
+        notification_configuration = {}
         try:
             response = self._s3.call(
                 'get_bucket_notification_configuration',
                 Bucket=self._get_bucket_name())
             LOG.debug(response)
+            del response['ResponseMetadata']
+            notification_configuration = response
             notification_spec_list = response['LambdaFunctionConfigurations']
         except Exception as exc:
             LOG.debug('Unable to get existing S3 event source notification configurations')
@@ -91,10 +94,7 @@ class S3EventSource(kappa.event_source.base.EventSource):
             LOG.debug("S3 event source already exists")
 
         if notification_spec_list:
-
-            notification_configuration = {
-                'LambdaFunctionConfigurations': notification_spec_list
-            }
+            notification_configuration['LambdaFunctionConfigurations'] = notification_spec_list
 
             try:
                 response = self._s3.call(
